@@ -120,3 +120,10 @@ main{max-width:1100px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-le
 .menu{display:grid;gap:10px;margin-top:16px}
 .toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:12px;z-index:30;font-weight:600;max-width:90vw;text-align:center}
 @media(prefers-reduced-motion:reduce){.card svg{transition:none}}
+
+.card .ph{display:block;width:100%;aspect-ratio:1;object-fit:cover;border-radius:14px;margin-bottom:10px;background:var(--line)}
+.row .rph{width:64px;height:64px;object-fit:cover;border-radius:14px;grid-row:span 2}
+.hero-ph{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:16px;margin-bottom:14px;background:var(--line)}
+.phprev{display:block;width:100%;max-height:260px;object-fit:cover;border-radius:12px}
+.phempty{display:grid;place-items:center;height:110px;border:1.5px dashed var(--line);border-radius:12px;color:var(--mute);font-size:15px}
+.phbox .btn{cursor:pointer}

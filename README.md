@@ -50,3 +50,7 @@ update auth.users
 set encrypted_password = crypt('NEW-PASSWORD', gen_salt('bf'))
 where email = 'USERNAME@yes-chef.example';
 ```
+
+## Recipe photos
+- If you set up the app before photos were added, run `photos.sql` once in Supabase's **SQL Editor**. (New setups get it from `setup.sql`.)
+- In the app, open a recipe, tap **Edit recipe**, then **Add photo**. Take a picture or pick one from your phone. Photos are shrunk before uploading, so they load fast.

@@ -31,7 +31,7 @@
     return {
       id: r.id, name: r.name || 'Untitled', minutes: r.minutes || null, servings: Math.max(1, +r.servings || 2),
       tags: P.parseTags(r.tags), ingredients: r.ingredients || '', stepsText: r.steps || '', steps: P.parseSteps(r.steps),
-      by: r.added_by_name || '', created: r.created_at, ing: parsed, colors: P.colorsFor(parsed, r.id || r.name), raw: r
+      by: r.added_by_name || '', photo: r.photo_url || '', created: r.created_at, ing: parsed, colors: P.colorsFor(parsed, r.id || r.name), raw: r
     };
   }
   function byId(id) { for (var i = 0; i < RECIPES.length; i++) if (RECIPES[i].id === id) return RECIPES[i]; return null; }
@@ -49,6 +49,30 @@
     }
     for (k = 0; k < 6; k++) { a = ((h >> k) % 360) * Math.PI / 180 + k * 1.7; d = 5 + k * 4; b += '<circle cx="' + (50 + Math.cos(a) * d).toFixed(1) + '" cy="' + (50 + Math.sin(a) * d).toFixed(1) + '" r="1.7" fill="' + c[(k + 1) % 3] + '"/>'; }
     return '<svg viewBox="0 0 100 100" aria-hidden="true"><ellipse cx="53" cy="56" rx="45" ry="43" fill="#000" opacity=".13"/><circle cx="50" cy="50" r="46" fill="#fff"/><circle cx="50" cy="50" r="45.5" fill="none" stroke="#e5ded5"/><circle cx="50" cy="50" r="35" fill="#f6f2ed"/>' + b + '<path d="M19 31a37 37 0 0 1 22-15" stroke="#fff" stroke-width="3" fill="none" opacity=".9" stroke-linecap="round"/></svg>';
+  }
+
+  function thumb(r, cls) { return r.photo ? '<img class="' + cls + '" src="' + esc(r.photo) + '" alt="" loading="lazy">' : plate(r); }
+  var BUCKET = 'recipe-photos';
+  function photoPath(url) { var i = String(url || '').indexOf('/' + BUCKET + '/'); return i > -1 ? decodeURIComponent(url.slice(i + BUCKET.length + 2).split('?')[0]) : null; }
+  function removePhotoFile(url) { var p = photoPath(url); if (p) sb.storage.from(BUCKET).remove([p]).catch(function () {}); }
+  function shrink(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var max = 1200, s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+        var c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+        c.toBlob(function (b) { b ? resolve(b) : reject(new Error('Couldn’t read that photo.')); }, 'image/jpeg', 0.82);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('That photo type isn’t supported. Try a JPG or PNG.')); };
+      img.src = url;
+    });
+  }
+  function photoField(r) {
+    var src = M.photoPreview || (!M.photoRemove && r && r.photo) || '';
+    return '<div class="phbox">' + (src ? '<img class="phprev" src="' + esc(src) + '" alt="Recipe photo">' : '<div class="phempty">No photo yet</div>') +
+      '<div class="sbar" style="margin-top:8px"><label class="btn ghost">' + (src ? 'Change photo' : 'Add photo') + '<input type="file" accept="image/*" id="photoIn" hidden></label>' +
+      (src ? '<button type="button" class="btn ghost" data-act="rmphoto">Remove photo</button>' : '') + '</div></div>';
   }
 
   /* ---------- grocery math ---------- */
@@ -86,7 +110,7 @@
     if (!RECIPES.length) { $('#grid').innerHTML = '<div class="empty" style="grid-column:1/-1"><h3>No recipes yet</h3><p>Tap “+ Add recipe” to add your first one.</p></div>'; return; }
     $('#grid').innerHTML = list.length ? list.map(function (r) {
       var on = !!inPlan(r.id);
-      return '<article class="card"><button class="open" data-act="open" data-id="' + r.id + '">' + plate(r) + '<h3>' + esc(r.name) + '</h3><div class="meta">' + esc(meta(r)) + '</div></button><button class="btn ' + (on ? 'on' : '') + '" data-act="toggle" data-id="' + r.id + '">' + (on ? 'In this week ✓' : 'Add to week') + '</button></article>';
+      return '<article class="card"><button class="open" data-act="open" data-id="' + r.id + '">' + thumb(r, 'ph') + '<h3>' + esc(r.name) + '</h3><div class="meta">' + esc(meta(r)) + '</div></button><button class="btn ' + (on ? 'on' : '') + '" data-act="toggle" data-id="' + r.id + '">' + (on ? 'In this week ✓' : 'Add to week') + '</button></article>';
     }).join('') : '<div class="empty" style="grid-column:1/-1"><h3>No matches</h3><p>Try another search or filter.</p></div>';
   }
 
@@ -97,7 +121,7 @@
   function renderPlan() {
     var rows = S.plan.map(function (p) {
       var r = byId(p.id); if (!r) return '';
-      return '<div class="row ' + (p.done ? 'done' : '') + '">' + plate(r) + '<div><h3>' + esc(r.name) + '</h3><div class="meta">' + esc(meta(r)) + '</div></div>' +
+      return '<div class="row ' + (p.done ? 'done' : '') + '">' + thumb(r, 'rph') + '<div><h3>' + esc(r.name) + '</h3><div class="meta">' + esc(meta(r)) + '</div></div>' +
         '<div class="acts">' + stepper(r.id, p.sv, 'sv') + '<button class="btn" data-act="open" data-id="' + r.id + '">Cook</button><button class="btn ghost" data-act="done" data-id="' + r.id + '">' + (p.done ? 'Undo' : 'Cooked') + '</button><button class="x" data-act="toggle" data-id="' + r.id + '" aria-label="Remove ' + esc(r.name) + '">×</button></div></div>';
     }).join('');
     $('#plan').innerHTML = rows ? rows + '<p class="note">Change servings and the grocery list updates. Your plan is just yours — recipes are shared.</p>'
@@ -149,7 +173,7 @@
   function renderView() {
     var r = byId(M.id); if (!r) { closeSheet(); return; }
     var p = inPlan(r.id), sv = p ? p.sv : M.sv, k = sv / r.servings;
-    openSheet('<div class="sh">' + plate(r) + '<div><h2 id="mt">' + esc(r.name) + '</h2><div class="meta">' + esc([r.minutes ? r.minutes + ' min' : ''].concat(r.tags).filter(Boolean).join(' · ')) + '</div></div><button class="x" data-act="close" aria-label="Close">×</button></div>' +
+    openSheet((r.photo ? '<img class="hero-ph" src="' + esc(r.photo) + '" alt="">' : '') + '<div class="sh">' + (r.photo ? '<span></span>' : plate(r)) + '<div><h2 id="mt">' + esc(r.name) + '</h2><div class="meta">' + esc([r.minutes ? r.minutes + ' min' : ''].concat(r.tags).filter(Boolean).join(' · ')) + '</div></div><button class="x" data-act="close" aria-label="Close">×</button></div>' +
       '<div class="sbar">' + stepper(r.id, sv, 'msv') + (r.by ? '<span class="meta">Added by ' + esc(r.by) + '</span>' : '') + '</div>' +
       '<h3>Ingredients</h3><ul class="ing">' + r.ing.map(function (g) { return '<li>' + esc(P.show(g.q == null ? null : g.q * k, g.u, g.name, g.note)) + '</li>'; }).join('') + '</ul>' +
       (r.steps.length ? '<h3>Steps</h3><ol class="steps">' + r.steps.map(function (s, i) { return '<li data-act="stepdone" data-i="' + i + '" class="' + (M.done[i] ? 'd' : '') + '">' + esc(s) + '</li>'; }).join('') + '</ol><p class="note">Tap a step to cross it off.</p>' : '') +
@@ -160,7 +184,7 @@
     var r = M.id ? byId(M.id) : null, cur = {};
     (r ? r.tags : []).forEach(function (t) { cur[t.toLowerCase()] = 1; });
     openSheet('<div class="sh"><span></span><h2 id="mt">' + (r ? 'Edit recipe' : 'New recipe') + '</h2><button class="x" data-act="close" aria-label="Close">×</button></div>' +
-      '<form id="rf" class="rf" novalidate>' +
+      '<form id="rf" class="rf" novalidate>' + '<fieldset><legend>Photo <span class="hint">optional</span></legend><div id="phField">' + photoField(r) + '</div></fieldset>' +
       '<label>Recipe name<input name="name" required maxlength="100" value="' + esc(r ? r.name : '') + '" placeholder="e.g. Grandma’s chili"></label>' +
       '<div class="two"><label>Total time (min)<input name="minutes" type="number" inputmode="numeric" min="1" max="600" value="' + (r && r.minutes ? r.minutes : '') + '" placeholder="30"></label>' +
       '<label>Serves<input name="servings" type="number" inputmode="numeric" min="1" max="20" value="' + (r ? r.servings : 2) + '"></label></div>' +
@@ -315,8 +339,24 @@
     var editing = M.id, q;
     if (editing) { row.updated_at = new Date().toISOString(); q = sb.from('recipes').update(row).eq('id', editing).select().single(); }
     else { row.added_by_name = userName(); q = sb.from('recipes').insert(row).select().single(); }
+    var blob = M.photoBlob, remove = M.photoRemove, oldPhoto = editing && byId(editing) ? byId(editing).photo : '';
     q.then(function (res) {
       if (res.error) { btn.disabled = false; btn.textContent = 'Try again'; msg.textContent = 'Couldn’t save: ' + res.error.message; return; }
+      if (!blob && !remove) return res;
+      if (!blob) return sb.from('recipes').update({ photo_url: null }).eq('id', res.data.id).select().single().then(function (r2) { if (r2.error) throw r2.error; if (oldPhoto) removePhotoFile(oldPhoto); return r2; });
+      btn.textContent = 'Uploading photo…';
+      var path = res.data.id + '/' + Date.now() + '.jpg';
+      return sb.storage.from(BUCKET).upload(path, blob, { contentType: 'image/jpeg', upsert: true }).then(function (up) {
+        if (up.error) throw up.error;
+        var url = sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+        return sb.from('recipes').update({ photo_url: url }).eq('id', res.data.id).select().single();
+      }).then(function (r2) { if (r2.error) throw r2.error; if (oldPhoto) removePhotoFile(oldPhoto); return r2; });
+    }).catch(function (err) {
+      var m = String(err && err.message || err);
+      toast(/photo_url|bucket|not found|policy/i.test(m) ? 'Recipe saved, but photos aren’t set up yet. Run photos.sql in Supabase.' : 'Recipe saved, but the photo didn’t upload: ' + m);
+      fetchRecipes(false); closeSheet(); return null;
+    }).then(function (res) {
+      if (!res || !res.data) return;
       var r = prep(res.data);
       if (editing) RECIPES = RECIPES.map(function (x) { return x.id === r.id ? r : x; }); else RECIPES.unshift(r);
       LS.set('dp-recipes', RECIPES.map(function (x) { return x.raw; }));
@@ -366,11 +406,13 @@
         el.disabled = true;
         sb.from('recipes').delete().eq('id', id).then(function (res) {
           if (res.error) { toast('Couldn’t delete: ' + res.error.message); el.disabled = false; return; }
+          var gone = byId(id); if (gone && gone.photo) removePhotoFile(gone.photo);
           RECIPES = RECIPES.filter(function (x) { return x.id !== id; }); S.plan = S.plan.filter(function (x) { return x.id !== id; });
           LS.set('dp-recipes', RECIPES.map(function (x) { return x.raw; }));
           closeSheet(); change(); toast('Recipe deleted');
         });
         break;
+      case 'rmphoto': if (M.photoPreview) URL.revokeObjectURL(M.photoPreview); M.photoBlob = null; M.photoPreview = null; M.photoRemove = true; $('#phField').innerHTML = photoField(M.id ? byId(M.id) : null); break;
       case 'refresh': closeSheet(); fetchRecipes(true); fetchPlan(); break;
       case 'signout':
         closeSheet(); sb.auth.signOut().finally(function () { USER = null; RECIPES = []; S = norm(); showAuth(); });
@@ -392,6 +434,14 @@
       ta.value = lines.join('\n'); preview();
     }
     else if (el.id === 'csv' && el.files && el.files[0]) { importCSV(el.files[0]); el.value = ''; }
+    else if (el.id === 'photoIn' && el.files && el.files[0]) {
+      var f = el.files[0], box = $('#phField'); box.insertAdjacentHTML('beforeend', '<p class="hint">Getting photo ready…</p>');
+      shrink(f).then(function (b) {
+        if (!M || M.mode !== 'edit') return;
+        if (M.photoPreview) URL.revokeObjectURL(M.photoPreview);
+        M.photoBlob = b; M.photoPreview = URL.createObjectURL(b); M.photoRemove = false; box.innerHTML = photoField(M.id ? byId(M.id) : null);
+      }).catch(function (err) { box.innerHTML = photoField(M.id ? byId(M.id) : null) + '<p class="msg">' + esc(err.message) + '</p>'; });
+    }
   });
 
   var pvTimer;
