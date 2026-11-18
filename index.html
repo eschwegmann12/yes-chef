@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#86295e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Yes, Chef">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<title>Yes, Chef</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gabarito:wght@600;800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head><body>
+<header class="bar">
+  <h1>Yes, Chef</h1>
+  <span id="net" class="net" hidden>Offline · changes will sync</span>
+  <button id="acct" class="acct" data-act="acct" hidden aria-label="Account"></button>
+</header>
+
+<section id="setup" class="center" hidden>
+  <h2>Almost ready</h2>
+  <p>Open <b>config.js</b> and paste in your Supabase Project URL and key, then reload this page.</p>
+</section>
+
+<section id="auth" class="center" hidden>
+  <svg class="hero" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="22" fill="#86295e"/><ellipse cx="50" cy="83.6" rx="23.8" ry="3.1" fill="#661d47"/><polygon points="29.8,37.4 70.2,37.4 67.6,74.4 32.4,74.4" fill="#fff"/><polygon points="61.4,37.4 70.2,37.4 67.6,74.4 60.6,74.4" fill="#f1e6ee"/><line x1="35.9" y1="40.9" x2="37.7" y2="72.6" stroke="#e3d2de" stroke-width="1.4"/><line x1="42.1" y1="40.9" x2="43.0" y2="72.6" stroke="#e3d2de" stroke-width="1.4"/><line x1="57.9" y1="40.9" x2="57.0" y2="72.6" stroke="#e3d2de" stroke-width="1.4"/><line x1="64.1" y1="40.9" x2="62.3" y2="72.6" stroke="#e3d2de" stroke-width="1.4"/><circle cx="32.4" cy="32.6" r="11.4" fill="#f1e6ee"/><circle cx="67.6" cy="32.6" r="11.4" fill="#f1e6ee"/><circle cx="40.3" cy="23.8" r="12.3" fill="#f1e6ee"/><circle cx="59.7" cy="23.8" r="12.3" fill="#f1e6ee"/><circle cx="50.0" cy="20.3" r="12.3" fill="#f1e6ee"/><circle cx="50.0" cy="30.8" r="14.1" fill="#f1e6ee"/><circle cx="32.4" cy="30.4" r="11.4" fill="#fff"/><circle cx="67.6" cy="30.4" r="11.4" fill="#fff"/><circle cx="40.3" cy="21.6" r="12.3" fill="#fff"/><circle cx="59.7" cy="21.6" r="12.3" fill="#fff"/><circle cx="50.0" cy="18.1" r="12.3" fill="#fff"/><circle cx="50.0" cy="28.6" r="14.1" fill="#fff"/><rect x="30.6" y="70.9" width="38.7" height="9.7" rx="2" fill="#fff"/><rect x="30.6" y="70.9" width="38.7" height="1.9" fill="#e3d2de"/><path transform="translate(50 54.1) scale(0.62) translate(-50 -61)" d="M50 72 C43 67 40 63.5 40 60.5 C40 57.5 42.3 55.5 44.8 55.5 C47 55.5 48.6 56.8 50 58.6 C51.4 56.8 53 55.5 55.2 55.5 C57.7 55.5 60 57.5 60 60.5 C60 63.5 57 67 50 72 Z" fill="#e0703a"/></svg>
+  <h2 id="authTitle">Welcome back</h2>
+  <p id="authSub" class="mute">Sign in to see your recipes and this week's plan.</p>
+  <form id="authForm" class="authform">
+    <label id="nameRow" hidden>Your first name<input name="name" autocomplete="given-name" maxlength="40"></label>
+    <label>Username<input name="username" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="30" required></label>
+    <label>Password<input name="password" type="password" autocomplete="current-password" minlength="6" required></label>
+    <button class="btn big" type="submit" id="authBtn">Sign in</button>
+    <p id="authMsg" class="msg" role="status"></p>
+  </form>
+  <button class="link" data-act="authmode" id="authToggle">New here? Create an account</button>
+</section>
+
+<main id="main" hidden>
+  <section id="v-recipes">
+    <div id="install"></div>
+    <div class="tools">
+      <input id="q" class="search" type="search" placeholder="Search recipes or ingredients" aria-label="Search recipes">
+      <button class="btn" data-act="new">+ Add recipe</button>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="grid" id="grid"></div>
+  </section>
+  <section id="v-plan" hidden><h2 class="vt">This week</h2><div id="plan"></div></section>
+  <section id="v-groceries" hidden><h2 class="vt">Groceries</h2><div id="gro"></div></section>
+</main>
+
+<nav class="tabs" id="nav" hidden aria-label="Sections">
+  <a href="#recipes" data-v="recipes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 17a3 3 0 0 1 3-3h11M9 8h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Recipes</a>
+  <a href="#plan" data-v="plan"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>This week<b id="nPlan" hidden></b></a>
+  <a href="#groceries" data-v="groceries"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2.5l2.2 11h10.6L20.5 7H7" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="9" cy="19.5" r="1.6" fill="currentColor"/><circle cx="17" cy="19.5" r="1.6" fill="currentColor"/></svg>Groceries<b id="nGro" hidden></b></a>
+</nav>
+
+<div class="ov" id="ov" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"></div></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="config.js"></script>
+<script src="vendor/supabase.js"></script>
+<script src="parse.js"></script>
+<script src="app.js"></script>
+</body></html>
