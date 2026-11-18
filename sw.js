@@ -1,7 +1,7 @@
 /* Yes, Chef offline support: keeps the app itself on the phone so it opens with no signal.
    Recipes and plans are cached by the app; this file never touches Supabase requests. */
-var CACHE = 'yes-chef-v11';
-var SHELL = ['./', 'index.html', 'style.css', 'app.js', 'parse.js', 'config.js', 'vendor/supabase.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/icon-maskable-512.png', 'recipe-template.csv'];
+var CACHE = 'yes-chef-v12';
+var SHELL = ['./', 'index.html', 'style.css', 'app.js', 'parse.js', 'config.js', 'supabase.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'icon-maskable-512.png', 'recipe-template.csv'];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
